@@ -106,7 +106,5 @@ async function enviar(nome, email, tipo){
     await bubble('⚠️ Ocorreu um erro ao enviar. Tente novamente mais tarde.');
   }
 }
-
-}
-
 start();
+}
