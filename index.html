@@ -41,7 +41,7 @@
     </footer>
   </main>
 
-  <!-- Configurações globais -->
+  <!-- CONFIGURAÇÕES GLOBAIS -->
   <script>
     window.__INTELLIH__ = {
       WEBAPP_URL: "https://script.google.com/macros/s/AKfycbweW56yedcnradB33gIRs6Sw1CfmvbLdbnAlogXfHHGYGnjs4CXZS2AEMpvrGkOsyB4/exec",
@@ -59,15 +59,28 @@
 
   const delay = (ms)=>new Promise(r=>setTimeout(r,ms));
 
+  // --- Efeito de digitação no texto das bolhas ---
+  async function typeText(element, text) {
+    const speed = 15;
+    for (let i = 0; i < text.length; i++) {
+      element.innerHTML = text.substring(0, i + 1);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      await delay(speed);
+    }
+  }
+
   async function bubble(text, from='bot'){
-    removeTyping(); // remove digitação se ativa
+    removeTyping();
     const wrap = document.createElement('div');
     wrap.className = 'message ' + (from==='user'?'user':'bot');
     const avatar = from==='bot'?'<div class="avatar"></div>':'';
-    wrap.innerHTML = avatar + `<div class="bubble">${text}</div>`;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    wrap.innerHTML = avatar;
+    wrap.appendChild(bubble);
     chatBox.appendChild(wrap);
     chatBox.scrollTop = chatBox.scrollHeight;
-    await delay(150);
+    await typeText(bubble, text);
   }
 
   function showTyping(){
