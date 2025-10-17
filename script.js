@@ -93,7 +93,7 @@ async function enviarDados(payload){
   // Pixel Lead
   try { fbq && fbq('track', 'Lead'); } catch(e) {}
   // Envio ao Apps Script
-  fetch("https://script.google.com/macros/s/AKfycbzh2h8Z0R-UaW-LkrtQVLZI_NQo64pWz9YLm9hIXzvT-Kn6qTsU4EppqSg3y6Y4S1Fc/exec", {
+  fetch("https://script.google.com/macros/s/AKfycbwNscEQV76b6huJaKX58ksslULhNb1vWvCwd-6IcnuiEPvKDpJgUXMWK-Cxhjjtizhe/exec", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ nome, email, tipo })
