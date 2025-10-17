@@ -1,110 +1,101 @@
 const chatBox = document.getElementById("chat-box");
+const WEBAPP_URL = (window.__INTELLIH__ || {}).WEBAPP_URL || "";
 
-function delay(ms){ return new Promise(res => setTimeout(res, ms)); }
+function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-async function showMessage(text, sender="bot", delayTime=350){
-  const wrap = document.createElement("div");
-  wrap.className = "message" + (sender === "user" ? " user" : "");
-  const bubble = document.createElement("div");
-  bubble.className = "bubble";
-  bubble.innerHTML = text;
-  wrap.appendChild(bubble);
+async function bubble(text, from='bot'){
+  const wrap = document.createElement('div');
+  wrap.className = 'message' + (from === 'user' ? ' user' : '');
+  const avatar = from === 'bot' ? '<div class="avatar"></div>' : '';
+  wrap.innerHTML = avatar + `<div class="bubble">${text}</div>`;
   chatBox.appendChild(wrap);
   chatBox.scrollTop = chatBox.scrollHeight;
-  await delay(delayTime);
+  await delay(150);
 }
 
-function addButtons(buttons){
-  const c = document.createElement("div");
-  c.className = "buttons";
-  buttons.forEach(({text, onClick}) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.textContent = text;
-    b.onclick = () => { c.remove(); onClick(); };
-    c.appendChild(b);
+function buttons(arr){
+  const div = document.createElement('div');
+  div.className = 'buttons';
+  arr.forEach(({label, onClick})=>{
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.onclick = ()=>{ div.remove(); onClick(); };
+    div.appendChild(b);
   });
-  chatBox.appendChild(c);
+  chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function inputField(type='text', placeholder='Digite aqui...'){
+  const inp = document.createElement('input');
+  inp.type = type;
+  inp.placeholder = placeholder;
+  chatBox.appendChild(inp);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  return inp;
 }
 
 async function start(){
-  await showMessage("👋 Oi! Eu sou o assistente da Intellih.");
-  await showMessage("Quer descobrir como automatizar seu negócio com IA?");
-  addButtons([
-    { text: "Sim, quero!", onClick: fase2 },
-    { text: "Quero ver exemplos", onClick: faseExemplo }
+  await bubble('👋 Oi! Eu sou o assistente da Intellih.');
+  await bubble('Quer descobrir como automatizar seu negócio com IA?');
+  buttons([
+    {label:'Sim, quero!', onClick: fasePerfil},
+    {label:'Quero ver exemplos', onClick: faseExemplos}
   ]);
 }
 
-async function fase2(){
-  await showMessage("🚀 Legal! Você é:");
-  addButtons([
-    { text: "Empreendedor(a)", onClick: () => coleta('Empreendedor') },
-    { text: "Autônomo(a)", onClick: () => coleta('Autônomo') },
-    { text: "Curioso sobre IA", onClick: () => coleta('Curioso') },
+async function fasePerfil(){
+  await bubble('🚀 Legal! Você é:');
+  buttons([
+    {label:'Empreendedor(a)', onClick: ()=>faseNome('Empreendedor')},
+    {label:'Autônomo(a)', onClick: ()=>faseNome('Autônomo')},
+    {label:'Curioso(a) sobre IA', onClick: ()=>faseNome('Curioso')}
   ]);
 }
 
-function faseExemplo(){
-  showMessage("👇 Alguns exemplos do que implementamos:", "bot");
-  showMessage("⚙️ Captação automática de leads", "bot");
-  showMessage("💬 Atendimento inteligente no WhatsApp", "bot");
-  showMessage("📊 Relatórios automáticos com IA", "bot");
-  addButtons([{ text: "Quero descobrir o ideal para mim", onClick: fase2 }]);
+async function faseExemplos(){
+  await bubble('👇 Exemplos práticos que implementamos:');
+  await bubble('⚙️ Captação automática de leads<br>💬 Atendimento inteligente no WhatsApp<br>📊 Relatórios e análises com IA');
+  buttons([{label:'Quero saber qual se encaixa no meu negócio', onClick: ()=>faseNome('Exemplos')}]);
 }
 
-function coleta(tipo){
-  showMessage("✏️ Digite seu nome:");
-  const input = document.createElement("input");
-  input.type = "text";
-  input.placeholder = "Seu nome completo";
-  chatBox.appendChild(input);
-  const btn = document.createElement("button");
-  btn.textContent = "Próximo";
-  btn.onclick = () => coletaEmail(tipo, (input.value || '').trim());
-  chatBox.appendChild(btn);
-  chatBox.scrollTop = chatBox.scrollHeight;
+async function faseNome(tipo){
+  await bubble('✏️ Me diga seu nome para personalizar o diagnóstico:');
+  const inp = inputField('text','Seu nome completo');
+  buttons([{label:'Próximo', onClick: ()=>faseEmail(tipo, inp.value)}]);
 }
 
-function coletaEmail(tipo, nome){
-  if(!nome){ showMessage("⚠️ Por favor, informe seu nome."); return; }
-  chatBox.innerHTML = "";
-  showMessage(`Perfeito, ${nome}!`);
-  showMessage("📧 Agora me diga seu e-mail:");
-  const input = document.createElement("input");
-  input.type = "email";
-  input.placeholder = "seu@email.com";
-  chatBox.appendChild(input);
-  const btn = document.createElement("button");
-  btn.textContent = "Enviar";
-  btn.onclick = () => enviarDados({ nome, email: (input.value||'').trim(), tipo });
-  chatBox.appendChild(btn);
-  chatBox.scrollTop = chatBox.scrollHeight;
+async function faseEmail(tipo, nome){
+  await bubble(`Perfeito, ${nome}!`);
+  await bubble('📧 Agora, seu e-mail:');
+  const inp = inputField('email','voce@empresa.com');
+  buttons([{label:'Enviar', onClick: ()=>enviar(nome, inp.value, tipo)}]);
 }
 
-async function enviarDados(payload){
-  const { nome, email, tipo } = payload;
+async function enviar(nome, email, tipo){
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
-    await showMessage("⚠️ E-mail inválido. Tente novamente.");
+    await bubble('⚠️ E-mail inválido. Tente novamente.');
     return;
   }
-  await showMessage("⏳ Processando seus dados...");
-  // Pixel Lead
-  try { fbq && fbq('track', 'Lead'); } catch(e) {}
-  // Envio ao Apps Script
-  fetch("https://script.google.com/macros/s/AKfycbzsU-C8TQ_jvzYApCbIXhlpe07kky2rx-xmpwiDq2zbpipVAjSMcOt01D9LWXjweK6x/exec", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nome, email, tipo })
-  })
-  .then(() => {
-    showMessage(`✅ Obrigado, ${nome}!`);
-    showMessage("Você receberá seu diagnóstico gratuito em até 24h.");
-  })
-  .catch(() => {
-    showMessage("⚠️ Ocorreu um erro no envio. Tente novamente mais tarde.");
-  });
+  await bubble('⏳ Processando seus dados...');
+  try { if(typeof fbq === 'function') fbq('track','Lead'); } catch(e){}
+  
+  try{
+    const res = await fetch(WEBAPP_URL, {
+      method:'POST',
+      body: JSON.stringify({ nome, email, tipo })
+    });
+    const data = await res.text();
+    if (data.includes('OK')) {
+      await bubble(`✅ Obrigado, ${nome}!`);
+      await bubble('Você receberá seu diagnóstico gratuito em até 24h.');
+    } else {
+      await bubble('⚠️ Houve um problema ao enviar. Verifique o Apps Script.');
+    }
+  }catch(e){
+    await bubble('⚠️ Ocorreu um erro ao enviar. Tente novamente mais tarde.');
+    console.error(e);
+  }
 }
 
 start();
