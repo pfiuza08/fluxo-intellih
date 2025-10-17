@@ -78,24 +78,35 @@ async function enviar(nome, email, tipo){
     return;
   }
   await bubble('⏳ Processando seus dados...');
-  try { if(typeof fbq === 'function') fbq('track','Lead'); } catch(e){}
-  
+
+  try { if (typeof fbq === 'function') fbq('track','Lead'); } catch(e){}
+
   try{
     const res = await fetch(WEBAPP_URL, {
-      method:'POST',
+      method: 'POST',
+      // IMPORTANTE: text/plain evita preflight OPTIONS
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ nome, email, tipo })
     });
-    const data = await res.text();
-    if (data.includes('OK')) {
+
+    const text = await res.text(); // Apps Script retorna JSON como texto
+    // Tenta interpretar como JSON
+    let json = {};
+    try { json = JSON.parse(text); } catch(_){}
+
+    if (res.ok && (json.status === 'OK' || text.includes('OK'))) {
       await bubble(`✅ Obrigado, ${nome}!`);
       await bubble('Você receberá seu diagnóstico gratuito em até 24h.');
     } else {
+      console.error('Resposta inesperada:', res.status, text);
       await bubble('⚠️ Houve um problema ao enviar. Verifique o Apps Script.');
     }
-  }catch(e){
+  } catch (err){
+    console.error('Fetch error:', err);
     await bubble('⚠️ Ocorreu um erro ao enviar. Tente novamente mais tarde.');
-    console.error(e);
   }
+}
+
 }
 
 start();
