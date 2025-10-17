@@ -26,14 +26,13 @@
 
 <body>
   <main class="chat-container">
-   <header class="header">
-    <div class="avatar" title="Agente Intellih"></div>
-    <div class="title">
-      <h1>Assistente Intellih <span class="status-dot"></span></h1>
-      <p>Diagnóstico de Automação Inteligente</p>
-    </div>
-  </header>
-
+    <header class="header">
+      <div class="avatar" title="Agente Intellih"></div>
+      <div class="title">
+        <h1>Assistente Intellih <span class="status-dot"></span></h1>
+        <p id="status-text">Online</p>
+      </div>
+    </header>
 
     <div id="chat-box" class="chat-box"></div>
 
@@ -41,6 +40,14 @@
       Intellih Tecnologia © 2025
     </footer>
   </main>
+
+  <!-- SELO FIXO DE AUTORIA -->
+  <div class="intellih-badge">
+    <a href="https://www.intellih.com.br" target="_blank" rel="noopener">
+      <img src="assets/logo-intellih.png" alt="Intellih Logo">
+      <span>Criado por <strong>Intellih</strong></span>
+    </a>
+  </div>
 
   <!-- CONFIGURAÇÕES GLOBAIS -->
   <script>
@@ -53,6 +60,9 @@
 
   <script>
   const chatBox = document.getElementById("chat-box");
+  const statusDot = document.querySelector(".status-dot");
+  const statusText = document.getElementById("status-text");
+
   const CFG = (window.__INTELLIH__ || {});
   const WEBAPP_URL = CFG.WEBAPP_URL || "";
   const EBOOK_URL  = CFG.EBOOK_URL  || "";
@@ -60,7 +70,21 @@
 
   const delay = (ms)=>new Promise(r=>setTimeout(r,ms));
 
-  // --- Efeito de digitação no texto das bolhas ---
+  // === Função de status dinâmico ===
+  function setStatusTyping(isTyping){
+    if(isTyping){
+      statusDot.style.background = "#999";
+      statusDot.style.boxShadow = "0 0 5px rgba(150,150,150,0.5)";
+      statusText.textContent = "Digitando...";
+    } else {
+      statusDot.style.background = "#3bc23b";
+      statusDot.style.transition = "background 0.6s ease, box-shadow 0.6s ease";
+      statusDot.style.boxShadow = "0 0 6px rgba(59,194,59,0.7)";
+      statusText.textContent = "Online";
+    }
+  }
+
+  // --- Efeito de digitação do texto nas bolhas ---
   async function typeText(element, text) {
     const speed = 15;
     for (let i = 0; i < text.length; i++) {
@@ -81,11 +105,15 @@
     wrap.appendChild(bubble);
     chatBox.appendChild(wrap);
     chatBox.scrollTop = chatBox.scrollHeight;
+
+    setStatusTyping(true);
     await typeText(bubble, text);
+    setStatusTyping(false);
   }
 
   function showTyping(){
     removeTyping();
+    setStatusTyping(true);
     const typing = document.createElement('div');
     typing.className = 'message bot typing-indicator';
     typing.innerHTML = `
@@ -125,13 +153,17 @@
 
   // --- Fluxo principal ---
   async function start(){
+    showTyping(); await delay(800);
+    await bubble('Olá! Seja bem-vindo(a) à Intellih.');
     showTyping(); await delay(600);
-    await bubble('Olá! Eu sou o assistente da Intellih.');
+    await bubble('Esta conversa é uma demonstração real do que automações inteligentes e agentes de IA podem fazer pelo seu negócio.');
     showTyping(); await delay(600);
-    await bubble('Quer descobrir como automatizar seu negócio com Inteligência Artificial?');
+    await bubble('Com poucos cliques, você verá como podemos captar informações, personalizar respostas e criar experiências automatizadas sob medida.');
+    showTyping(); await delay(600);
+    await bubble('Quer descobrir, na prática, o que automatizar na sua empresa com IA?');
     buttons([
       {label:'Sim, quero!', onClick:()=>{fasePerfil();}},
-      {label:'Quero ver exemplos', onClick:faseExemplos}
+      {label:'Quero ver exemplos primeiro', onClick:faseExemplos}
     ]);
   }
 
@@ -147,15 +179,15 @@
 
   async function faseExemplos(){
     showTyping(); await delay(400);
-    await bubble('Veja alguns exemplos de automações que aplicamos:');
+    await bubble('Veja alguns exemplos de automações que implementamos para nossos clientes:');
     showTyping(); await delay(400);
-    await bubble('• Captação automática de leads<br>• Atendimento inteligente via WhatsApp<br>• Relatórios e análises com IA');
-    buttons([{label:'Quero meu diagnóstico', onClick:()=>faseNome('Interessado')}]);
+    await bubble('• Captação automática de leads<br>• Atendimento inteligente no WhatsApp<br>• Relatórios e análises com IA<br>• Agendamentos automáticos e respostas rápidas');
+    buttons([{label:'Quero meu diagnóstico gratuito', onClick:()=>faseNome('Interessado')}]);
   }
 
   async function faseNome(tipo){
     showTyping(); await delay(400);
-    await bubble('Qual é o seu nome?');
+    await bubble('Antes de prosseguirmos, me diga seu nome:');
     const inp=inputField('text','Digite seu nome completo');
     buttons([{label:'Próximo',onClick:()=>faseEmail(tipo,(inp.value||'').trim())}]);
   }
@@ -163,7 +195,7 @@
   async function faseEmail(tipo,nome){
     if(!nome){await bubble('Por favor, digite seu nome antes de continuar.');return;}
     showTyping(); await delay(400);
-    await bubble(`Ótimo, ${nome}! Agora me diga seu e-mail:`);
+    await bubble(`Prazer, ${nome}! Agora me informe seu e-mail:`);
     const inp=inputField('email','voce@empresa.com');
     buttons([{label:'Próximo',onClick:()=>faseEbook(tipo,nome,(inp.value||'').trim())}]);
   }
@@ -200,7 +232,7 @@
       let payload={};try{payload=JSON.parse(text);}catch(_){}
       if(res.ok&&(payload.status==='OK'||text.includes('OK'))){
         showTyping(); await delay(600);
-        await bubble(`Obrigado, ${nome}!`);
+        await bubble(`Perfeito, ${nome}!`);
         if(ebookOptIn&&EBOOK_URL){
           showTyping(); await delay(600);
           await bubble('Enviei um e-mail com o link do e-book. Você também pode acessar por aqui:');
@@ -209,7 +241,7 @@
           await bubble('Tudo certo! Você receberá seu diagnóstico gratuito em até 24 horas.');
         }
       }else{
-        await bubble('Ocorreu um erro ao enviar seus dados. Tente novamente em instantes.');
+        await bubble('Ocorreu um erro ao enviar seus dados. Tente novamente mais tarde.');
       }
     }catch(err){
       await bubble('Falha de comunicação com o servidor. Verifique sua conexão.');
