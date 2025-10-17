@@ -6,14 +6,15 @@
   <title>Assistente Intellih | Diagnóstico de Automação</title>
   <meta name="description" content="Converse com o assistente da Intellih e descubra o que automatizar no seu negócio.">
   <link rel="stylesheet" href="style.css">
-  <!-- Pixel Meta -->
+  <!-- Meta Pixel -->
   <script>
     !(function(f,b,e,v,n,t,s){
-      if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];
-      t=b.createElement(e);t.async=!0;t.src=v;
+      if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
       s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
-    })(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init','3929736470503988');
     fbq('track','PageView');
   </script>
@@ -22,17 +23,24 @@
   /></noscript>
 </head>
 <body>
-  <main class="chat-container" role="main" aria-label="Assistente Intellih">
-    <header class="topbar">
-      <div class="avatar" aria-hidden="true"></div>
-      <div class="brand">
-        <strong>Assistente Intellih</strong>
-        <span>Diagnóstico de Automação</span>
+  <main class="chat-container">
+    <header class="header">
+      <div class="avatar"></div>
+      <div class="title">
+        <h1>Assistente Intellih</h1>
+        <p>Diagnóstico rápido de automação</p>
       </div>
     </header>
-    <div id="chat-box" class="chat-box" aria-live="polite"></div>
+    <div id="chat-box" class="chat-box"></div>
     <footer class="footer">🤖 Intellih Tecnologia</footer>
   </main>
+
+  <script>
+    window.__INTELLIH__ = {
+      WEBAPP_URL: "https://script.google.com/macros/s/AKfycbzh2h8Z0R-UaW-LkrtQVLZI_NQo64pWz9YLm9hIXzvT-Kn6qTsU4EppqSg3y6Y4S1Fc/exec"
+    };
+  </script>
   <script src="script.js"></script>
 </body>
 </html>
+
