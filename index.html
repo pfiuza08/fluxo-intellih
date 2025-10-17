@@ -18,6 +18,9 @@
     })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init','3929736470503988');
     fbq('track','PageView');
+
+    // Evento de engajamento (permaneceu 10 segundos na página)
+    setTimeout(()=>fbq('trackCustom','TimeOnPage10s'),10000);
   </script>
   <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=3929736470503988&ev=PageView&noscript=1"
@@ -136,7 +139,11 @@
     arr.forEach(({label,onClick})=>{
       const b=document.createElement('button');
       b.textContent=label;
-      b.onclick=()=>{div.remove();onClick();};
+      b.onclick=()=>{
+        fbq('trackCustom','BotInteraction'); // registra interação
+        div.remove();
+        onClick();
+      };
       div.appendChild(b);
     });
     chatBox.appendChild(div);
@@ -145,7 +152,9 @@
 
   function inputField(type='text',placeholder='Digite aqui...'){
     const inp=document.createElement('input');
-    inp.type=type; inp.placeholder=placeholder;
+    inp.type=type; 
+    inp.placeholder=placeholder;
+    inp.addEventListener('focus',()=>fbq('trackCustom','BotInteraction'));
     chatBox.appendChild(inp);
     chatBox.scrollTop=chatBox.scrollHeight;
     return inp;
@@ -162,7 +171,7 @@
     showTyping(); await delay(600);
     await bubble('Quer descobrir, na prática, o que automatizar na sua empresa com IA?');
     buttons([
-      {label:'Sim, quero!', onClick:()=>{fasePerfil();}},
+      {label:'Sim, quero!', onClick:()=>{fbq('trackCustom','LeadIntent'); fasePerfil();}},
       {label:'Quero ver exemplos primeiro', onClick:faseExemplos}
     ]);
   }
@@ -214,6 +223,7 @@
   }
 
   async function enviar(nome,email,tipo,ebookOptIn){
+    fbq('track','Lead'); // Lead captado
     showTyping(); await delay(600);
     await bubble('Processando suas informações...');
     const params=new URLSearchParams(window.location.search);
@@ -231,9 +241,11 @@
       const text=await res.text();
       let payload={};try{payload=JSON.parse(text);}catch(_){}
       if(res.ok&&(payload.status==='OK'||text.includes('OK'))){
+        fbq('track','CompleteRegistration'); // Diagnóstico completo
         showTyping(); await delay(600);
         await bubble(`Perfeito, ${nome}!`);
         if(ebookOptIn&&EBOOK_URL){
+          fbq('trackCustom','DownloadEbook');
           showTyping(); await delay(600);
           await bubble('Enviei um e-mail com o link do e-book. Você também pode acessar por aqui:');
           await bubble(`<a href="${EBOOK_URL}" target="_blank" rel="noopener">Baixar e-book Automação Inteligente</a>`);
