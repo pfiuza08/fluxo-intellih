@@ -7,7 +7,7 @@
   <meta name="description" content="Converse com o assistente da Intellih e descubra o que automatizar no seu negócio.">
   <link rel="stylesheet" href="style.css">
 
-  <!-- Meta Pixel -->
+  <!-- Meta Pixel: configuração dupla -->
   <script>
     !(function(f,b,e,v,n,t,s){
       if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -16,12 +16,25 @@
       n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
       s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
     })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+
+    /* Pixel principal */
     fbq('init','3929736470503988');
     fbq('track','PageView');
 
-    // Evento de engajamento (permaneceu 10 segundos na página)
-    setTimeout(()=>fbq('trackCustom','TimeOnPage10s'),10000);
+    /* Pixel secundário — fluxo exclusivo (substitua o ID abaixo) */
+    fbq('init','790540353803292');
+    fbq('track','PageView');
+
+    /* Evento de permanência (10s) — enviado a ambos */
+    setTimeout(()=>{
+      fbq('trackCustom','TimeOnPage10s');
+      fbq('trackCustom','TimeOnPage10s',{},{
+        eventID:'TimeOnPage10s',
+        pixelId:'COLE_AQUI_SEU_NOVO_PIXEL_ID'
+      });
+    },10000);
   </script>
+
   <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=3929736470503988&ev=PageView&noscript=1"
   /></noscript>
@@ -44,7 +57,7 @@
     </footer>
   </main>
 
-  <!-- SELO FIXO DE AUTORIA -->
+  <!-- Selo fixo de autoria -->
   <div class="intellih-badge">
     <a href="https://www.intellih.com.br" target="_blank" rel="noopener">
       <img src="assets/logo-intellih.png" alt="Intellih Logo">
@@ -52,7 +65,7 @@
     </a>
   </div>
 
-  <!-- CONFIGURAÇÕES GLOBAIS -->
+  <!-- Configurações globais -->
   <script>
     window.__INTELLIH__ = {
       WEBAPP_URL: "https://script.google.com/macros/s/AKfycbweW56yedcnradB33gIRs6Sw1CfmvbLdbnAlogXfHHGYGnjs4CXZS2AEMpvrGkOsyB4/exec",
@@ -61,6 +74,7 @@
     };
   </script>
 
+  <!-- Script principal -->
   <script>
   const chatBox = document.getElementById("chat-box");
   const statusDot = document.querySelector(".status-dot");
@@ -70,67 +84,29 @@
   const WEBAPP_URL = CFG.WEBAPP_URL || "";
   const EBOOK_URL  = CFG.EBOOK_URL  || "";
   const SECRET_KEY = CFG.SECRET_KEY || "INTELLIH2025";
+  const SECOND_PIXEL = "COLE_AQUI_SEU_NOVO_PIXEL_ID";
 
   const delay = (ms)=>new Promise(r=>setTimeout(r,ms));
 
-  // === Função de status dinâmico ===
-  function setStatusTyping(isTyping){
-    if(isTyping){
-      statusDot.style.background = "#999";
-      statusDot.style.boxShadow = "0 0 5px rgba(150,150,150,0.5)";
-      statusText.textContent = "Digitando...";
-    } else {
-      statusDot.style.background = "#3bc23b";
-      statusDot.style.transition = "background 0.6s ease, box-shadow 0.6s ease";
-      statusDot.style.boxShadow = "0 0 6px rgba(59,194,59,0.7)";
-      statusText.textContent = "Online";
-    }
+  function dualTrack(event, type='track', payload={}){
+    fbq(type, event, payload);
+    fbq(type, event, payload, {eventID:event, pixelId:SECOND_PIXEL});
   }
 
-  // --- Efeito de digitação do texto nas bolhas ---
-  async function typeText(element, text) {
-    const speed = 15;
-    for (let i = 0; i < text.length; i++) {
-      element.innerHTML = text.substring(0, i + 1);
-      chatBox.scrollTop = chatBox.scrollHeight;
-      await delay(speed);
-    }
+  function dualTrackCustom(event, payload={}){
+    fbq('trackCustom', event, payload);
+    fbq('trackCustom', event, payload, {eventID:event, pixelId:SECOND_PIXEL});
   }
 
   async function bubble(text, from='bot'){
-    removeTyping();
     const wrap = document.createElement('div');
     wrap.className = 'message ' + (from==='user'?'user':'bot');
-    const avatar = from==='bot'?'<div class="avatar"></div>':'';
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
-    wrap.innerHTML = avatar;
     wrap.appendChild(bubble);
     chatBox.appendChild(wrap);
     chatBox.scrollTop = chatBox.scrollHeight;
-
-    setStatusTyping(true);
-    await typeText(bubble, text);
-    setStatusTyping(false);
-  }
-
-  function showTyping(){
-    removeTyping();
-    setStatusTyping(true);
-    const typing = document.createElement('div');
-    typing.className = 'message bot typing-indicator';
-    typing.innerHTML = `
-      <div class="avatar"></div>
-      <div class="bubble typing">
-        <span></span><span></span><span></span>
-      </div>`;
-    chatBox.appendChild(typing);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
-
-  function removeTyping(){
-    const old = document.querySelector('.typing-indicator');
-    if(old) old.remove();
+    bubble.innerHTML = text;
   }
 
   function buttons(arr){
@@ -140,7 +116,7 @@
       const b=document.createElement('button');
       b.textContent=label;
       b.onclick=()=>{
-        fbq('trackCustom','BotInteraction'); // registra interação
+        dualTrackCustom('BotInteraction');
         div.remove();
         onClick();
       };
@@ -152,32 +128,24 @@
 
   function inputField(type='text',placeholder='Digite aqui...'){
     const inp=document.createElement('input');
-    inp.type=type; 
-    inp.placeholder=placeholder;
-    inp.addEventListener('focus',()=>fbq('trackCustom','BotInteraction'));
+    inp.type=type; inp.placeholder=placeholder;
+    inp.addEventListener('focus',()=>dualTrackCustom('BotInteraction'));
     chatBox.appendChild(inp);
     chatBox.scrollTop=chatBox.scrollHeight;
     return inp;
   }
 
-  // --- Fluxo principal ---
   async function start(){
-    showTyping(); await delay(800);
-    await bubble('Olá! Seja bem-vindo(a) à Intellih.');
-    showTyping(); await delay(600);
+    await bubble('Olá! 👋 Seja bem-vindo(a) à Intellih.');
     await bubble('Esta conversa é uma demonstração real do que automações inteligentes e agentes de IA podem fazer pelo seu negócio.');
-    showTyping(); await delay(600);
-    await bubble('Com poucos cliques, você verá como podemos captar informações, personalizar respostas e criar experiências automatizadas sob medida.');
-    showTyping(); await delay(600);
     await bubble('Quer descobrir, na prática, o que automatizar na sua empresa com IA?');
     buttons([
-      {label:'Sim, quero!', onClick:()=>{fbq('trackCustom','LeadIntent'); fasePerfil();}},
+      {label:'Sim, quero!', onClick:()=>{dualTrackCustom('LeadIntent'); fasePerfil();}},
       {label:'Quero ver exemplos primeiro', onClick:faseExemplos}
     ]);
   }
 
   async function fasePerfil(){
-    showTyping(); await delay(400);
     await bubble('Perfeito! Me diga com qual perfil você mais se identifica:');
     buttons([
       {label:'Empreendedor(a)', onClick:()=>faseNome('Empreendedor')},
@@ -187,15 +155,12 @@
   }
 
   async function faseExemplos(){
-    showTyping(); await delay(400);
-    await bubble('Veja alguns exemplos de automações que implementamos para nossos clientes:');
-    showTyping(); await delay(400);
-    await bubble('• Captação automática de leads<br>• Atendimento inteligente no WhatsApp<br>• Relatórios e análises com IA<br>• Agendamentos automáticos e respostas rápidas');
+    await bubble('Veja alguns exemplos de automações que implementamos:');
+    await bubble('• Captação automática de leads<br>• Atendimento inteligente no WhatsApp<br>• Relatórios e análises com IA<br>• Agendamentos automáticos');
     buttons([{label:'Quero meu diagnóstico gratuito', onClick:()=>faseNome('Interessado')}]);
   }
 
   async function faseNome(tipo){
-    showTyping(); await delay(400);
     await bubble('Antes de prosseguirmos, me diga seu nome:');
     const inp=inputField('text','Digite seu nome completo');
     buttons([{label:'Próximo',onClick:()=>faseEmail(tipo,(inp.value||'').trim())}]);
@@ -203,7 +168,6 @@
 
   async function faseEmail(tipo,nome){
     if(!nome){await bubble('Por favor, digite seu nome antes de continuar.');return;}
-    showTyping(); await delay(400);
     await bubble(`Prazer, ${nome}! Agora me informe seu e-mail:`);
     const inp=inputField('email','voce@empresa.com');
     buttons([{label:'Próximo',onClick:()=>faseEbook(tipo,nome,(inp.value||'').trim())}]);
@@ -214,7 +178,6 @@
       await bubble('E-mail inválido. Tente novamente.');
       return;
     }
-    showTyping(); await delay(400);
     await bubble('Deseja receber também o e-book "Automação Inteligente"?');
     buttons([
       {label:'Sim, enviar e-book',onClick:()=>enviar(nome,email,tipo,true)},
@@ -223,8 +186,7 @@
   }
 
   async function enviar(nome,email,tipo,ebookOptIn){
-    fbq('track','Lead'); // Lead captado
-    showTyping(); await delay(600);
+    dualTrack('Lead');
     await bubble('Processando suas informações...');
     const params=new URLSearchParams(window.location.search);
     const origem={
@@ -239,25 +201,22 @@
         body:JSON.stringify({nome,email,tipo,ebookOptIn,token:SECRET_KEY,...origem})
       });
       const text=await res.text();
-      let payload={};try{payload=JSON.parse(text);}catch(_){}
-      if(res.ok&&(payload.status==='OK'||text.includes('OK'))){
-        fbq('track','CompleteRegistration'); // Diagnóstico completo
-        showTyping(); await delay(600);
+      if(res.ok && text.includes('OK')){
+        dualTrack('CompleteRegistration');
         await bubble(`Perfeito, ${nome}!`);
-        if(ebookOptIn&&EBOOK_URL){
-          fbq('trackCustom','DownloadEbook');
-          showTyping(); await delay(600);
+        if(ebookOptIn && EBOOK_URL){
+          dualTrackCustom('DownloadEbook');
           await bubble('Enviei um e-mail com o link do e-book. Você também pode acessar por aqui:');
           await bubble(`<a href="${EBOOK_URL}" target="_blank" rel="noopener">Baixar e-book Automação Inteligente</a>`);
-        }else{
+        } else {
           await bubble('Tudo certo! Você receberá seu diagnóstico gratuito em até 24 horas.');
         }
-      }else{
+      } else {
         await bubble('Ocorreu um erro ao enviar seus dados. Tente novamente mais tarde.');
       }
-    }catch(err){
-      await bubble('Falha de comunicação com o servidor. Verifique sua conexão.');
+    } catch(err){
       console.error(err);
+      await bubble('Falha de comunicação com o servidor.');
     }
   }
 
