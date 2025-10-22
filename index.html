@@ -7,7 +7,7 @@
   <meta name="description" content="Converse com o assistente da Intellih e descubra o que automatizar no seu negócio.">
   <link rel="stylesheet" href="style.css">
 
-  <!-- Meta Pixel: configuração dupla -->
+  <!-- Meta Pixel - dupla configuração -->
   <script>
     !(function(f,b,e,v,n,t,s){
       if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -21,16 +21,16 @@
     fbq('init','3929736470503988');
     fbq('track','PageView');
 
-    /* Pixel secundário — fluxo exclusivo (substitua o ID abaixo) */
+    /* Novo pixel exclusivo do fluxo interativo */
     fbq('init','790540353803292');
     fbq('track','PageView');
 
-    /* Evento de permanência (10s) — enviado a ambos */
+    /* Evento de engajamento: permaneceu 10s na página */
     setTimeout(()=>{
       fbq('trackCustom','TimeOnPage10s');
       fbq('trackCustom','TimeOnPage10s',{},{
         eventID:'TimeOnPage10s',
-        pixelId:'COLE_AQUI_SEU_NOVO_PIXEL_ID'
+        pixelId:'790540353803292'
       });
     },10000);
   </script>
@@ -84,18 +84,21 @@
   const WEBAPP_URL = CFG.WEBAPP_URL || "";
   const EBOOK_URL  = CFG.EBOOK_URL  || "";
   const SECRET_KEY = CFG.SECRET_KEY || "INTELLIH2025";
-  const SECOND_PIXEL = "COLE_AQUI_SEU_NOVO_PIXEL_ID";
+
+  // Pixels
+  const PIXEL_MAIN = "3929736470503988";
+  const PIXEL_SECOND = "790540353803292";
 
   const delay = (ms)=>new Promise(r=>setTimeout(r,ms));
 
   function dualTrack(event, type='track', payload={}){
     fbq(type, event, payload);
-    fbq(type, event, payload, {eventID:event, pixelId:SECOND_PIXEL});
+    fbq(type, event, payload, {eventID:event, pixelId:PIXEL_SECOND});
   }
 
   function dualTrackCustom(event, payload={}){
     fbq('trackCustom', event, payload);
-    fbq('trackCustom', event, payload, {eventID:event, pixelId:SECOND_PIXEL});
+    fbq('trackCustom', event, payload, {eventID:event, pixelId:PIXEL_SECOND});
   }
 
   async function bubble(text, from='bot'){
