@@ -1,4 +1,81 @@
-<script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Assistente Intellih | Diagnóstico de Automação</title>
+  <meta name="description" content="Converse com o assistente da Intellih e descubra o que automatizar no seu negócio.">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Meta Pixel - dupla configuração -->
+  <script>
+    !(function(f,b,e,v,n,t,s){
+      if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+      s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
+    })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+
+    /* Pixel principal */
+    fbq('init','3929736470503988');
+    fbq('track','PageView');
+
+    /* Novo pixel exclusivo do fluxo interativo */
+    fbq('init','790540353803292');
+    fbq('track','PageView');
+
+    /* Evento de engajamento: permaneceu 10s na página */
+    setTimeout(()=>{
+      fbq('trackCustom','TimeOnPage10s');
+      fbq('trackCustom','TimeOnPage10s',{},{
+        eventID:'TimeOnPage10s',
+        pixelId:'790540353803292'
+      });
+    },10000);
+  </script>
+
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=3929736470503988&ev=PageView&noscript=1"
+  /></noscript>
+</head>
+
+<body>
+  <main class="chat-container">
+    <header class="header">
+      <div class="avatar" title="Agente Intellih"></div>
+      <div class="title">
+        <h1>Assistente Intellih <span class="status-dot"></span></h1>
+        <p id="status-text">Online</p>
+      </div>
+    </header>
+
+    <div id="chat-box" class="chat-box"></div>
+
+    <footer class="footer">
+      Intellih Tecnologia © 2025
+    </footer>
+  </main>
+
+  <!-- Selo fixo de autoria -->
+  <div class="intellih-badge">
+    <a href="https://www.intellih.com.br" target="_blank" rel="noopener">
+      <img src="assets/logo-intellih.png" alt="Intellih Logo">
+      <span>Criado por <strong>Intellih</strong></span>
+    </a>
+  </div>
+
+  <!-- Configurações globais -->
+  <script>
+    window.__INTELLIH__ = {
+      WEBAPP_URL: "https://script.google.com/macros/s/AKfycbweW56yedcnradB33gIRs6Sw1CfmvbLdbnAlogXfHHGYGnjs4CXZS2AEMpvrGkOsyB4/exec",
+      EBOOK_URL: "https://fluxo.intellih.com.br/e-books/ebook-automacao-inteligente.pdf",
+      SECRET_KEY: "INTELLIH2025"
+    };
+  </script>
+
+  <!-- Script principal -->
+  <script>
 const chatBox = document.getElementById("chat-box");
 const statusDot = document.querySelector(".status-dot");
 const statusText = document.getElementById("status-text");
@@ -175,3 +252,6 @@ start();
   100% { background-position: 0 0; }
 }
 </style>
+
+</body>
+</html>
