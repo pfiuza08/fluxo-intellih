@@ -17,11 +17,15 @@
       s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
     })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
 
+    /* Pixel principal */
     fbq('init','3929736470503988');
     fbq('track','PageView');
+
+    /* Novo pixel exclusivo do fluxo interativo */
     fbq('init','790540353803292');
     fbq('track','PageView');
 
+    /* Evento de engajamento: permaneceu 10s na página */
     setTimeout(()=>{
       fbq('trackCustom','TimeOnPage10s');
       fbq('trackCustom','TimeOnPage10s',{},{
@@ -69,169 +73,154 @@
   </script>
 
   <script>
-  const chatBox=document.getElementById("chat-box");
-  const CFG=window.__INTELLIH__||{};
-  const WEBAPP_URL=CFG.WEBAPP_URL;
-  const EBOOK_URL=CFG.EBOOK_URL;
-  const SECRET_KEY=CFG.SECRET_KEY;
-  const PIXEL_SECOND="790540353803292";
-  const state={nome:"",email:"",tipo:"",ebookOptIn:false,uiLocked:false};
-  const delay=(ms)=>new Promise(r=>setTimeout(r,ms));
-  function fbqSafe(...a){try{fbq(...a);}catch(_){}}
+  const chatBox = document.getElementById("chat-box");
+  const statusDot = document.querySelector(".status-dot");
+  const statusText = document.getElementById("status-text");
 
-  async function bubble(html,from="bot"){
-    const wrap=document.createElement("div");
-    wrap.className="message "+(from==="user"?"user":"bot");
-    const b=document.createElement("div");
-    b.className="bubble";
-    b.innerHTML=html;
-    wrap.appendChild(b);
-    chatBox.appendChild(wrap);
-    chatBox.scrollTop=chatBox.scrollHeight;
-    await delay(200);
+  const CFG = (window.__INTELLIH__ || {});
+  const WEBAPP_URL = CFG.WEBAPP_URL || "";
+  const EBOOK_URL  = CFG.EBOOK_URL  || "";
+  const SECRET_KEY = CFG.SECRET_KEY || "INTELLIH2025";
+
+  const PIXEL_MAIN = "3929736470503988";
+  const PIXEL_SECOND = "790540353803292";
+
+  const delay = (ms)=>new Promise(r=>setTimeout(r,ms));
+
+  function dualTrack(event, type='track', payload={}){
+    fbq(type, event, payload);
+    fbq(type, event, payload, {eventID:event, pixelId:PIXEL_SECOND});
   }
 
-  function clearInputs(){[...chatBox.querySelectorAll("input, .buttons, form")].forEach(e=>e.remove());}
+  function dualTrackCustom(event, payload={}){
+    fbq('trackCustom', event, payload);
+    fbq('trackCustom', event, payload, {eventID:event, pixelId:PIXEL_SECOND});
+  }
 
-  function buttons(list){
-    clearInputs();
-    const div=document.createElement("div");
-    div.className="buttons";
-    list.forEach(({label,onClick})=>{
-      const b=document.createElement("button");
+  async function bubble(text, from='bot'){
+    const wrap = document.createElement('div');
+    wrap.className = 'message ' + (from==='user'?'user':'bot');
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    wrap.appendChild(bubble);
+    chatBox.appendChild(wrap);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    bubble.innerHTML = text;
+  }
+
+  function buttons(arr){
+    const div=document.createElement('div');
+    div.className='buttons';
+    arr.forEach(({label,onClick})=>{
+      const b=document.createElement('button');
       b.textContent=label;
-      b.onclick=()=>{if(state.uiLocked)return;fbqSafe('trackCustom','BotInteraction');div.remove();onClick();};
+      b.onclick=()=>{
+        dualTrackCustom('BotInteraction');
+        div.remove();
+        onClick();
+      };
       div.appendChild(b);
     });
     chatBox.appendChild(div);
     chatBox.scrollTop=chatBox.scrollHeight;
   }
 
-  function inputForm(labelText, type="text", placeholder, onSubmit){
-    clearInputs();
-    const form=document.createElement("form");
-    form.className="input-form";
-    const label=document.createElement("label");
-    label.textContent=labelText;
-    const input=document.createElement("input");
-    input.type=type;
-    input.placeholder=placeholder;
-    const btn=document.createElement("button");
-    btn.type="submit";
-    btn.textContent="Enviar";
-    form.appendChild(label);
-    form.appendChild(input);
-    form.appendChild(btn);
-    form.onsubmit=(e)=>{
-      e.preventDefault();
-      const val=input.value.trim();
-      if(!val){bubble("Por favor, preencha o campo antes de continuar.");return;}
-      form.remove();
-      onSubmit(val);
-    };
-    chatBox.appendChild(form);
+  function inputField(type='text',placeholder='Digite aqui...'){
+    const inp=document.createElement('input');
+    inp.type=type; inp.placeholder=placeholder;
+    inp.addEventListener('focus',()=>dualTrackCustom('BotInteraction'));
+    chatBox.appendChild(inp);
     chatBox.scrollTop=chatBox.scrollHeight;
-    input.focus();
+    return inp;
   }
 
+  // ===== NOVO FLUXO INICIAL =====
   async function start(){
-    await bubble("Olá! Eu sou a assistente da Intellih.");
+    await bubble('Olá! 👋 Eu sou a assistente da Intellih.');
     await bubble('Antes de começarmos, posso te enviar gratuitamente o e-book <b>"Automação Inteligente para Pequenos Negócios"</b>?');
-    await bubble("Nele você vai descobrir, com exemplos reais, como automatizar partes do seu negócio.");
+    await bubble('Nele você vai descobrir, com exemplos reais, como automatizar partes do seu negócio e economizar tempo.');
     buttons([
-      {label:"Sim, quero o e-book",onClick:()=>{fbqSafe('trackCustom','LeadIntent');state.tipo="Ebook";state.ebookOptIn=true;faseNome();}},
-      {label:"Prefiro conversar primeiro",onClick:()=>faseDiagnostico()}
+      {label:'Sim, quero o e-book 📘', onClick:()=>{dualTrackCustom('LeadIntent'); faseNome('Ebook');}},
+      {label:'Prefiro conversar primeiro', onClick:()=>faseDiagnostico()}
     ]);
   }
 
-  function faseNome(){
-    inputForm("Digite seu nome completo:","text","Seu nome...",(val)=>{state.nome=val;faseEmail();});
+  async function faseNome(tipo){
+    await bubble('Perfeito! Me diga seu nome para eu te enviar o e-book:');
+    const inp=inputField('text','Digite seu nome completo');
+    buttons([{label:'Próximo',onClick:()=>faseEmail(tipo,(inp.value||'').trim())}]);
   }
 
-  function faseEmail(){
-    inputForm("Agora, digite seu e-mail:","email","voce@empresa.com",(val)=>{
-      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val)){bubble("E-mail inválido. Tente novamente.");faseEmail();return;}
-      state.email=val;enviarLead(true);
-    });
+  async function faseEmail(tipo,nome){
+    if(!nome){await bubble('Por favor, digite seu nome antes de continuar.');return;}
+    await bubble(`Ótimo, ${nome}! Agora digite seu e-mail:`);
+    const inp=inputField('email','voce@empresa.com');
+    buttons([{label:'Receber e-book',onClick:()=>enviar(nome,(inp.value||'').trim(),tipo,true)}]);
   }
 
+  // Mantém o fluxo de diagnóstico após o e-book
   async function faseDiagnostico(){
-    await bubble("Esta conversa é uma demonstração prática do que automações inteligentes e agentes de IA podem fazer pelo seu negócio.");
-    await bubble("Quer descobrir, na prática, o que automatizar na sua empresa com IA?");
+    await bubble('Perfeito! Esta conversa é uma demonstração prática do que automações inteligentes e agentes de IA podem fazer pelo seu negócio.');
+    await bubble('Quer descobrir, na prática, o que automatizar na sua empresa com IA?');
     buttons([
-      {label:"Sim, quero!",onClick:()=>fasePerfil()},
-      {label:"Quero ver exemplos primeiro",onClick:()=>faseExemplos()}
+      {label:'Sim, quero!', onClick:()=>fasePerfil()},
+      {label:'Quero ver exemplos primeiro', onClick:faseExemplos}
     ]);
   }
 
   async function fasePerfil(){
-    await bubble("Com qual perfil você mais se identifica?");
+    await bubble('Me diga com qual perfil você mais se identifica:');
     buttons([
-      {label:"Empreendedor(a)",onClick:()=>{state.tipo="Empreendedor";faseNome();}},
-      {label:"Autônomo(a)",onClick:()=>{state.tipo="Autônomo";faseNome();}},
-      {label:"Curioso(a)",onClick:()=>{state.tipo="Curioso";faseNome();}}
+      {label:'Empreendedor(a)', onClick:()=>faseNome('Empreendedor')},
+      {label:'Autônomo(a)', onClick:()=>faseNome('Autônomo')},
+      {label:'Curioso(a) sobre IA', onClick:()=>faseNome('Curioso')}
     ]);
   }
 
   async function faseExemplos(){
-    await bubble("Veja alguns exemplos de automações que implementamos:");
-    await bubble("• Captação automática de leads<br>• Atendimento inteligente no WhatsApp<br>• Relatórios e análises com IA<br>• Agendamentos automáticos");
-    buttons([{label:"Quero meu diagnóstico gratuito",onClick:()=>{state.tipo="Interessado";faseNome();}}]);
+    await bubble('Veja alguns exemplos de automações que implementamos:');
+    await bubble('• Captação automática de leads<br>• Atendimento inteligente no WhatsApp<br>• Relatórios e análises com IA<br>• Agendamentos automáticos');
+    buttons([{label:'Quero meu diagnóstico gratuito', onClick:()=>faseNome('Interessado')}]);
   }
 
-  async function enviarLead(fromEbook){
-    if(state.uiLocked)return;
-    state.uiLocked=true;
-    fbqSafe('track','Lead');
-    fbqSafe('track','Lead',{}, {eventID:'Lead',pixelId:PIXEL_SECOND});
-    await bubble("Processando suas informações...");
-
+  async function enviar(nome,email,tipo,ebookOptIn){
+    dualTrack('Lead');
+    await bubble('Processando suas informações...');
     const params=new URLSearchParams(window.location.search);
-    const origem={utm_source:params.get("utm_source")||"direto",utm_medium:params.get("utm_medium")||"nao_definido",utm_campaign:params.get("utm_campaign")||"nao_definido"};
+    const origem={
+      utm_source:params.get("utm_source")||"direto",
+      utm_medium:params.get("utm_medium")||"nao_definido",
+      utm_campaign:params.get("utm_campaign")||"nao_definido"
+    };
 
     try{
-      const res=await fetch(WEBAPP_URL,{method:"POST",body:JSON.stringify({nome:state.nome,email:state.email,tipo:state.tipo||"Diagnóstico",ebookOptIn:state.ebookOptIn,token:SECRET_KEY,...origem})});
+      const res=await fetch(WEBAPP_URL,{
+        method:'POST',
+        body:JSON.stringify({nome,email,tipo,ebookOptIn,token:SECRET_KEY,...origem})
+      });
       const text=await res.text();
-      if(res.ok&&text.includes("OK")){
-        fbqSafe('track','CompleteRegistration');
-        fbqSafe('track','CompleteRegistration',{}, {eventID:'CompleteRegistration',pixelId:PIXEL_SECOND});
-        await bubble(`Perfeito, ${state.nome.split(" ")[0]}!`);
-        if(state.ebookOptIn&&EBOOK_URL){
-          fbqSafe('trackCustom','DownloadEbook');
-          fbqSafe('trackCustom','DownloadEbook',{}, {eventID:'DownloadEbook',pixelId:PIXEL_SECOND});
-          await bubble("Enviei o e-book para o seu e-mail. Você também pode acessar agora:");
-          await bubble(`<a href="${EBOOK_URL}" target="_blank" rel="noopener">Baixar e-book Automação Inteligente</a>`);
-          await bubble("Quer que eu te mostre também ideias de automação personalizadas?");
-          buttons([{label:"Sim, quero ver",onClick:()=>faseDiagnostico()}]);
-        }else{
-          await bubble("Tudo certo! Você receberá seu diagnóstico gratuito em até 24 horas.");
+      if(res.ok && text.includes('OK')){
+        dualTrack('CompleteRegistration');
+        await bubble(`Perfeito, ${nome}!`);
+        if(ebookOptIn && EBOOK_URL){
+          dualTrackCustom('DownloadEbook');
+          await bubble('Enviei o e-book para o seu e-mail. Você também pode acessar agora:');
+          await bubble(`<a href="${EBOOK_URL}" target="_blank" rel="noopener">📘 Baixar e-book Automação Inteligente</a>`);
+          await bubble('Quer que eu te mostre também ideias de automação personalizadas?');
+          buttons([{label:'Sim, quero ver', onClick:faseDiagnostico}]);
+        } else {
+          await bubble('Tudo certo! Você receberá seu diagnóstico gratuito em até 24 horas.');
         }
-      }else{
-        await bubble("Ocorreu um erro ao enviar seus dados. Tente novamente mais tarde.");
+      } else {
+        await bubble('Ocorreu um erro ao enviar seus dados. Tente novamente mais tarde.');
       }
-    }catch(err){
+    } catch(err){
       console.error(err);
-      await bubble("Falha de comunicação com o servidor.");
-    }finally{
-      state.uiLocked=false;
+      await bubble('Falha de comunicação com o servidor.');
     }
   }
 
-  document.addEventListener("DOMContentLoaded",()=>start());
+  start();
   </script>
-
-  <style>
-  /* Ajuste de estilo para campos visíveis */
-  .input-form {display:flex;flex-direction:column;gap:8px;margin-top:10px;}
-  .input-form label {font-size:.9rem;color:#333;}
-  .input-form input {
-    padding:10px 12px;border:1px solid #ccc;border-radius:10px;font-size:1rem;
-  }
-  .input-form button {
-    align-self:flex-end;background:#c44b04;color:#fff;
-    border:none;padding:10px 16px;border-radius:10px;cursor:pointer;
-  }
-  .input-form button:hover{opacity:0.9;}
-  </style>
 </body>
 </html>
