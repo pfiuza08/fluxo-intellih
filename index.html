@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Assistente Intellih | Diagnóstico de Automação</title>
-  <meta name="description" content="Converse com o assistente da Intellih e descubra o que automatizar no seu negócio.">
+  <title>Assistente Intellih | Diagnóstico e E-book de Automação</title>
+  <meta name="description" content="Converse com o assistente da Intellih, receba o e-book gratuito e descubra o que automatizar no seu negócio.">
   <link rel="stylesheet" href="style.css">
 
   <!-- Meta Pixel - dupla configuração -->
@@ -57,7 +57,6 @@
     </footer>
   </main>
 
-  <!-- Selo fixo de autoria -->
   <div class="intellih-badge">
     <a href="https://www.intellih.com.br" target="_blank" rel="noopener">
       <img src="assets/logo-intellih.png" alt="Intellih Logo">
@@ -65,7 +64,6 @@
     </a>
   </div>
 
-  <!-- Configurações globais -->
   <script>
     window.__INTELLIH__ = {
       WEBAPP_URL: "https://script.google.com/macros/s/AKfycbweW56yedcnradB33gIRs6Sw1CfmvbLdbnAlogXfHHGYGnjs4CXZS2AEMpvrGkOsyB4/exec",
@@ -74,7 +72,6 @@
     };
   </script>
 
-  <!-- Script principal -->
   <script>
   const chatBox = document.getElementById("chat-box");
   const statusDot = document.querySelector(".status-dot");
@@ -85,7 +82,6 @@
   const EBOOK_URL  = CFG.EBOOK_URL  || "";
   const SECRET_KEY = CFG.SECRET_KEY || "INTELLIH2025";
 
-  // Pixels
   const PIXEL_MAIN = "3929736470503988";
   const PIXEL_SECOND = "790540353803292";
 
@@ -138,18 +134,42 @@
     return inp;
   }
 
+  // ===== NOVO FLUXO INICIAL =====
   async function start(){
-    await bubble('Olá! 👋 Seja bem-vindo(a) à Intellih.');
-    await bubble('Esta conversa é uma demonstração real do que automações inteligentes e agentes de IA podem fazer pelo seu negócio.');
+    await bubble('Olá! 👋 Eu sou a assistente da Intellih.');
+    await bubble('Antes de começarmos, posso te enviar gratuitamente o e-book <b>"Automação Inteligente para Pequenos Negócios"</b>?');
+    await bubble('Nele você vai descobrir, com exemplos reais, como automatizar partes do seu negócio e economizar tempo.');
+    buttons([
+      {label:'Sim, quero o e-book 📘', onClick:()=>{dualTrackCustom('LeadIntent'); faseNome('Ebook');}},
+      {label:'Prefiro conversar primeiro', onClick:()=>faseDiagnostico()}
+    ]);
+  }
+
+  async function faseNome(tipo){
+    await bubble('Perfeito! Me diga seu nome para eu te enviar o e-book:');
+    const inp=inputField('text','Digite seu nome completo');
+    buttons([{label:'Próximo',onClick:()=>faseEmail(tipo,(inp.value||'').trim())}]);
+  }
+
+  async function faseEmail(tipo,nome){
+    if(!nome){await bubble('Por favor, digite seu nome antes de continuar.');return;}
+    await bubble(`Ótimo, ${nome}! Agora digite seu e-mail:`);
+    const inp=inputField('email','voce@empresa.com');
+    buttons([{label:'Receber e-book',onClick:()=>enviar(nome,(inp.value||'').trim(),tipo,true)}]);
+  }
+
+  // Mantém o fluxo de diagnóstico após o e-book
+  async function faseDiagnostico(){
+    await bubble('Perfeito! Esta conversa é uma demonstração prática do que automações inteligentes e agentes de IA podem fazer pelo seu negócio.');
     await bubble('Quer descobrir, na prática, o que automatizar na sua empresa com IA?');
     buttons([
-      {label:'Sim, quero!', onClick:()=>{dualTrackCustom('LeadIntent'); fasePerfil();}},
+      {label:'Sim, quero!', onClick:()=>fasePerfil()},
       {label:'Quero ver exemplos primeiro', onClick:faseExemplos}
     ]);
   }
 
   async function fasePerfil(){
-    await bubble('Perfeito! Me diga com qual perfil você mais se identifica:');
+    await bubble('Me diga com qual perfil você mais se identifica:');
     buttons([
       {label:'Empreendedor(a)', onClick:()=>faseNome('Empreendedor')},
       {label:'Autônomo(a)', onClick:()=>faseNome('Autônomo')},
@@ -161,31 +181,6 @@
     await bubble('Veja alguns exemplos de automações que implementamos:');
     await bubble('• Captação automática de leads<br>• Atendimento inteligente no WhatsApp<br>• Relatórios e análises com IA<br>• Agendamentos automáticos');
     buttons([{label:'Quero meu diagnóstico gratuito', onClick:()=>faseNome('Interessado')}]);
-  }
-
-  async function faseNome(tipo){
-    await bubble('Antes de prosseguirmos, me diga seu nome:');
-    const inp=inputField('text','Digite seu nome completo');
-    buttons([{label:'Próximo',onClick:()=>faseEmail(tipo,(inp.value||'').trim())}]);
-  }
-
-  async function faseEmail(tipo,nome){
-    if(!nome){await bubble('Por favor, digite seu nome antes de continuar.');return;}
-    await bubble(`Prazer, ${nome}! Agora me informe seu e-mail:`);
-    const inp=inputField('email','voce@empresa.com');
-    buttons([{label:'Próximo',onClick:()=>faseEbook(tipo,nome,(inp.value||'').trim())}]);
-  }
-
-  async function faseEbook(tipo,nome,email){
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
-      await bubble('E-mail inválido. Tente novamente.');
-      return;
-    }
-    await bubble('Deseja receber também o e-book "Automação Inteligente"?');
-    buttons([
-      {label:'Sim, enviar e-book',onClick:()=>enviar(nome,email,tipo,true)},
-      {label:'Agora não',onClick:()=>enviar(nome,email,tipo,false)}
-    ]);
   }
 
   async function enviar(nome,email,tipo,ebookOptIn){
@@ -209,8 +204,10 @@
         await bubble(`Perfeito, ${nome}!`);
         if(ebookOptIn && EBOOK_URL){
           dualTrackCustom('DownloadEbook');
-          await bubble('Enviei um e-mail com o link do e-book. Você também pode acessar por aqui:');
-          await bubble(`<a href="${EBOOK_URL}" target="_blank" rel="noopener">Baixar e-book Automação Inteligente</a>`);
+          await bubble('Enviei o e-book para o seu e-mail. Você também pode acessar agora:');
+          await bubble(`<a href="${EBOOK_URL}" target="_blank" rel="noopener">📘 Baixar e-book Automação Inteligente</a>`);
+          await bubble('Quer que eu te mostre também ideias de automação personalizadas?');
+          buttons([{label:'Sim, quero ver', onClick:faseDiagnostico}]);
         } else {
           await bubble('Tudo certo! Você receberá seu diagnóstico gratuito em até 24 horas.');
         }
