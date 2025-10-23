@@ -209,7 +209,7 @@
         await bubble(`Perfeito, ${nome}!`);
         if(ebookOptIn && EBOOK_URL){
           dualTrackCustom('DownloadEbook');
-          await bubble('Você receberá seu diagnóstico gratuito em até 24 horas. Enviei um e-mail com o link do e-book. Você também pode acessar por aqui:');
+          await bubble('Você receberá seu diagnóstico gratuito em até 24 horas e, também, já enviei um e-mail com o link do e-book. Se preferir, pode acessar por aqui:');
           await bubble(`<a href="${EBOOK_URL}" target="_blank" rel="noopener">Baixar e-book Automação Inteligente</a>`);
         } else {
           await bubble('Tudo certo! Você receberá seu diagnóstico gratuito em até 24 horas.');
