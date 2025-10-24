@@ -54,7 +54,6 @@
     </footer>
   </main>
 
-  <!-- Selo fixo de autoria -->
   <div class="intellih-badge">
     <a href="https://www.intellih.com.br" target="_blank" rel="noopener">
       <img src="assets/logo-intellih.png" alt="Intellih Logo">
@@ -62,7 +61,6 @@
     </a>
   </div>
 
-  <!-- Configurações globais -->
   <script>
     window.__INTELLIH__ = {
       WEBAPP_URL: "https://script.google.com/macros/s/AKfycbweW56yedcnradB33gIRs6Sw1CfmvbLdbnAlogXfHHGYGnjs4CXZS2AEMpvrGkOsyB4/exec",
@@ -71,42 +69,34 @@
     };
   </script>
 
-  <!-- Script principal -->
   <script>
   const chatBox = document.getElementById("chat-box");
   const statusDot = document.querySelector(".status-dot");
   const statusText = document.getElementById("status-text");
   const voiceBtn = document.getElementById("voice-toggle");
-
   let voiceEnabled = false;
+
+  // som de notificação
+  const ping = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_4f80e8ffdf.mp3?filename=notification-6990.mp3");
 
   const CFG = (window.__INTELLIH__ || {});
   const WEBAPP_URL = CFG.WEBAPP_URL || "";
   const EBOOK_URL  = CFG.EBOOK_URL  || "";
   const SECRET_KEY = CFG.SECRET_KEY || "INTELLIH2025";
 
-  const PIXEL_MAIN = "3929736470503988";
   const PIXEL_SECOND = "790540353803292";
-
   const delay = (ms)=>new Promise(r=>setTimeout(r,ms));
 
-  function dualTrack(event, type='track', payload={}){
-    fbq(type, event, payload);
-    fbq(type, event, payload, {eventID:event, pixelId:PIXEL_SECOND});
-  }
+  function dualTrack(e,t='track',p={}){fbq(t,e,p);fbq(t,e,p,{eventID:e,pixelId:PIXEL_SECOND});}
+  function dualTrackCustom(e,p={}){fbq('trackCustom',e,p);fbq('trackCustom',e,p,{eventID:e,pixelId:PIXEL_SECOND});}
 
-  function dualTrackCustom(event, payload={}){
-    fbq('trackCustom', event, payload);
-    fbq('trackCustom', event, payload, {eventID:event, pixelId:PIXEL_SECOND});
-  }
-
-  // 🔊 Fala do assistente (voz feminina brasileira)
+  // 🔊 Fala do assistente
   function speak(text) {
     if (!voiceEnabled || !window.speechSynthesis) return;
     const utter = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, ''));
     utter.lang = "pt-BR";
     utter.pitch = 1;
-    utter.rate = 1;
+    utter.rate = 0.9; // fala mais suave
     utter.volume = 1;
     const voices = speechSynthesis.getVoices();
     const brVoice = voices.find(v => v.lang === "pt-BR" && v.name.toLowerCase().includes("female"));
@@ -122,8 +112,8 @@
     if (voiceEnabled) speak("Voz do assistente ativada.");
   });
 
-  // 🔹 Efeito de digitação
-  async function typingEffect(text, from='bot', speed=25) {
+  // 🔹 Efeito de digitação (mais lento)
+  async function typingEffect(text, from='bot', speed=45) {
     const wrap = document.createElement('div');
     wrap.className = 'message ' + (from==='user' ? 'user' : 'bot');
     const bubble = document.createElement('div');
@@ -132,9 +122,10 @@
     chatBox.appendChild(wrap);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    await delay(400 + Math.random()*400);
+    await delay(600 + Math.random()*600); // pausa natural
     bubble.classList.remove('typing');
 
+    ping.play().catch(()=>{}); // toca som
     for (let i = 0; i < text.length; i++) {
       bubble.innerHTML = text.slice(0, i + 1);
       chatBox.scrollTop = chatBox.scrollHeight;
@@ -258,7 +249,6 @@
   start();
   </script>
 
-  <!-- Estilo do efeito de digitação e botão de voz -->
   <style>
   .typing {
     position: relative;
