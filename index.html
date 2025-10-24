@@ -17,15 +17,11 @@
       s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
     })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
 
-    /* Pixel principal */
     fbq('init','3929736470503988');
     fbq('track','PageView');
-
-    /* Novo pixel exclusivo do fluxo interativo */
     fbq('init','790540353803292');
     fbq('track','PageView');
 
-    /* Evento de engajamento: permaneceu 10s na página */
     setTimeout(()=>{
       fbq('trackCustom','TimeOnPage10s');
       fbq('trackCustom','TimeOnPage10s',{},{
@@ -48,6 +44,7 @@
         <h1>Assistente Intellih <span class="status-dot"></span></h1>
         <p id="status-text">Online</p>
       </div>
+      <button id="voice-toggle" class="voice-btn" title="Ativar ou desativar voz">🔊</button>
     </header>
 
     <div id="chat-box" class="chat-box"></div>
@@ -76,182 +73,217 @@
 
   <!-- Script principal -->
   <script>
-const chatBox = document.getElementById("chat-box");
-const statusDot = document.querySelector(".status-dot");
-const statusText = document.getElementById("status-text");
+  const chatBox = document.getElementById("chat-box");
+  const statusDot = document.querySelector(".status-dot");
+  const statusText = document.getElementById("status-text");
+  const voiceBtn = document.getElementById("voice-toggle");
 
-const CFG = (window.__INTELLIH__ || {});
-const WEBAPP_URL = CFG.WEBAPP_URL || "";
-const EBOOK_URL  = CFG.EBOOK_URL  || "";
-const SECRET_KEY = CFG.SECRET_KEY || "INTELLIH2025";
+  let voiceEnabled = false;
 
-// Pixels
-const PIXEL_MAIN = "3929736470503988";
-const PIXEL_SECOND = "790540353803292";
+  const CFG = (window.__INTELLIH__ || {});
+  const WEBAPP_URL = CFG.WEBAPP_URL || "";
+  const EBOOK_URL  = CFG.EBOOK_URL  || "";
+  const SECRET_KEY = CFG.SECRET_KEY || "INTELLIH2025";
 
-const delay = (ms)=>new Promise(r=>setTimeout(r,ms));
+  const PIXEL_MAIN = "3929736470503988";
+  const PIXEL_SECOND = "790540353803292";
 
-function dualTrack(event, type='track', payload={}){
-  fbq(type, event, payload);
-  fbq(type, event, payload, {eventID:event, pixelId:PIXEL_SECOND});
-}
+  const delay = (ms)=>new Promise(r=>setTimeout(r,ms));
 
-function dualTrackCustom(event, payload={}){
-  fbq('trackCustom', event, payload);
-  fbq('trackCustom', event, payload, {eventID:event, pixelId:PIXEL_SECOND});
-}
-
-// 🔹 Efeito de digitação
-async function typingEffect(text, from='bot', speed=25) {
-  const wrap = document.createElement('div');
-  wrap.className = 'message ' + (from==='user' ? 'user' : 'bot');
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble typing';
-  wrap.appendChild(bubble);
-  chatBox.appendChild(wrap);
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  await delay(400 + Math.random()*400); // tempo de "digitando..."
-  bubble.classList.remove('typing');
-
-  // digita caractere a caractere
-  for (let i = 0; i < text.length; i++) {
-    bubble.innerHTML = text.slice(0, i + 1);
-    chatBox.scrollTop = chatBox.scrollHeight;
-    await delay(speed);
+  function dualTrack(event, type='track', payload={}){
+    fbq(type, event, payload);
+    fbq(type, event, payload, {eventID:event, pixelId:PIXEL_SECOND});
   }
-}
 
-function buttons(arr){
-  const div=document.createElement('div');
-  div.className='buttons';
-  arr.forEach(({label,onClick})=>{
-    const b=document.createElement('button');
-    b.textContent=label;
-    b.onclick=()=>{
-      dualTrackCustom('BotInteraction');
-      div.remove();
-      onClick();
-    };
-    div.appendChild(b);
+  function dualTrackCustom(event, payload={}){
+    fbq('trackCustom', event, payload);
+    fbq('trackCustom', event, payload, {eventID:event, pixelId:PIXEL_SECOND});
+  }
+
+  // 🔊 Fala do assistente (voz feminina brasileira)
+  function speak(text) {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+    const utter = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, ''));
+    utter.lang = "pt-BR";
+    utter.pitch = 1;
+    utter.rate = 1;
+    utter.volume = 1;
+    const voices = speechSynthesis.getVoices();
+    const brVoice = voices.find(v => v.lang === "pt-BR" && v.name.toLowerCase().includes("female"));
+    if (brVoice) utter.voice = brVoice;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
+  }
+
+  // Botão de voz
+  voiceBtn.addEventListener("click", () => {
+    voiceEnabled = !voiceEnabled;
+    voiceBtn.textContent = voiceEnabled ? "🔇" : "🔊";
+    if (voiceEnabled) speak("Voz do assistente ativada.");
   });
-  chatBox.appendChild(div);
-  chatBox.scrollTop=chatBox.scrollHeight;
-}
 
-function inputField(type='text',placeholder='Digite aqui...'){
-  const inp=document.createElement('input');
-  inp.type=type; inp.placeholder=placeholder;
-  inp.addEventListener('focus',()=>dualTrackCustom('BotInteraction'));
-  chatBox.appendChild(inp);
-  chatBox.scrollTop=chatBox.scrollHeight;
-  return inp;
-}
+  // 🔹 Efeito de digitação
+  async function typingEffect(text, from='bot', speed=25) {
+    const wrap = document.createElement('div');
+    wrap.className = 'message ' + (from==='user' ? 'user' : 'bot');
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble typing';
+    wrap.appendChild(bubble);
+    chatBox.appendChild(wrap);
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-async function start(){
-  await typingEffect('Olá! 👋 Seja bem-vindo(a) à Intellih.');
-  await typingEffect('Esta conversa é uma demonstração real do que automações inteligentes e agentes de IA podem fazer pelo seu negócio.');
-  await typingEffect('Quer descobrir, na prática, o que automatizar na sua empresa com IA e receber um mini e-book sobre automação?');
-  buttons([
-    {label:'Sim, quero!', onClick:()=>{dualTrackCustom('LeadIntent'); fasePerfil();}},
-    {label:'Quero ver exemplos primeiro', onClick:faseExemplos}
-  ]);
-}
+    await delay(400 + Math.random()*400);
+    bubble.classList.remove('typing');
 
-async function fasePerfil(){
-  await typingEffect('Perfeito! Me diga com qual perfil você mais se identifica:');
-  buttons([
-    {label:'Empreendedor(a)', onClick:()=>faseNome('Empreendedor')},
-    {label:'Autônomo(a)', onClick:()=>faseNome('Autônomo')},
-    {label:'Curioso(a) sobre IA', onClick:()=>faseNome('Curioso')}
-  ]);
-}
-
-async function faseExemplos(){
-  await typingEffect('Veja alguns exemplos de automações que implementamos:');
-  await typingEffect('• Captação automática de leads<br>• Atendimento inteligente no WhatsApp<br>• Relatórios e análises com IA<br>• Agendamentos automáticos');
-  buttons([{label:'Quero meu diagnóstico gratuito', onClick:()=>faseNome('Interessado')}]);
-}
-
-async function faseNome(tipo){
-  await typingEffect('Antes de prosseguirmos, me diga seu nome:');
-  const inp=inputField('text','Digite seu nome completo');
-  buttons([{label:'Próximo',onClick:()=>faseEmail(tipo,(inp.value||'').trim())}]);
-}
-
-async function faseEmail(tipo,nome){
-  if(!nome){await typingEffect('Por favor, digite seu nome antes de continuar.');return;}
-  await typingEffect(`Prazer, ${nome}! Agora me informe seu e-mail:`);
-  const inp=inputField('email','voce@empresa.com');
-  buttons([{label:'Próximo',onClick:()=>faseEbook(tipo,nome,(inp.value||'').trim())}]);
-}
-
-async function faseEbook(tipo,nome,email){
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
-    await typingEffect('E-mail inválido. Tente novamente.');
-    return;
-  }
-  await typingEffect('Deseja receber também o e-book "Automação Inteligente"?');
-  buttons([
-    {label:'Sim, enviar e-book',onClick:()=>enviar(nome,email,tipo,true)},
-    {label:'Agora não',onClick:()=>enviar(nome,email,tipo,false)}
-  ]);
-}
-
-async function enviar(nome,email,tipo,ebookOptIn){
-  dualTrack('Lead');
-  await typingEffect('Processando suas informações...');
-  const params=new URLSearchParams(window.location.search);
-  const origem={
-    utm_source:params.get("utm_source")||"direto",
-    utm_medium:params.get("utm_medium")||"nao_definido",
-    utm_campaign:params.get("utm_campaign")||"nao_definido"
-  };
-
-  try{
-    const res=await fetch(WEBAPP_URL,{
-      method:'POST',
-      body:JSON.stringify({nome,email,tipo,ebookOptIn,token:SECRET_KEY,...origem})
-    });
-    const text=await res.text();
-    if(res.ok && text.includes('OK')){
-      dualTrack('CompleteRegistration');
-      await typingEffect(`Perfeito, ${nome}!`);
-      if(ebookOptIn && EBOOK_URL){
-        dualTrackCustom('DownloadEbook');
-        await typingEffect('Você receberá seu diagnóstico gratuito em até 24 horas e, também, já enviei um e-mail com o link do e-book. Se preferir, pode acessar por aqui:');
-        await typingEffect(`<a href="${EBOOK_URL}" target="_blank" rel="noopener">Baixar e-book Automação Inteligente</a>`);
-      } else {
-        await typingEffect('Tudo certo! Você receberá seu diagnóstico gratuito em até 24 horas.');
-      }
-    } else {
-      await typingEffect('Ocorreu um erro ao enviar seus dados. Tente novamente mais tarde.');
+    for (let i = 0; i < text.length; i++) {
+      bubble.innerHTML = text.slice(0, i + 1);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      await delay(speed);
     }
-  } catch(err){
-    console.error(err);
-    await typingEffect('Falha de comunicação com o servidor.');
+
+    if (from === 'bot') speak(text);
   }
-}
 
-start();
-</script>
+  function buttons(arr){
+    const div=document.createElement('div');
+    div.className='buttons';
+    arr.forEach(({label,onClick})=>{
+      const b=document.createElement('button');
+      b.textContent=label;
+      b.onclick=()=>{
+        dualTrackCustom('BotInteraction');
+        div.remove();
+        onClick();
+      };
+      div.appendChild(b);
+    });
+    chatBox.appendChild(div);
+    chatBox.scrollTop=chatBox.scrollHeight;
+  }
 
-<style>
-.typing {
-  position: relative;
-  color: transparent !important;
-  min-width: 60px;
-  height: 18px;
-  background: linear-gradient(90deg, #ddd 25%, #eee 37%, #ddd 63%);
-  background-size: 400% 100%;
-  animation: pulse 1.2s ease-in-out infinite;
-  border-radius: 10px;
-}
-@keyframes pulse {
-  0% { background-position: 100% 0; }
-  100% { background-position: 0 0; }
-}
-</style>
+  function inputField(type='text',placeholder='Digite aqui...'){
+    const inp=document.createElement('input');
+    inp.type=type; inp.placeholder=placeholder;
+    inp.addEventListener('focus',()=>dualTrackCustom('BotInteraction'));
+    chatBox.appendChild(inp);
+    chatBox.scrollTop=chatBox.scrollHeight;
+    return inp;
+  }
 
+  async function start(){
+    await typingEffect('Olá! 👋 Seja bem-vindo(a) à Intellih.');
+    await typingEffect('Esta conversa é uma demonstração real do que automações inteligentes e agentes de IA podem fazer pelo seu negócio.');
+    await typingEffect('Quer descobrir, na prática, o que automatizar na sua empresa com IA e receber um mini e-book sobre automação?');
+    buttons([
+      {label:'Sim, quero!', onClick:()=>{dualTrackCustom('LeadIntent'); fasePerfil();}},
+      {label:'Quero ver exemplos primeiro', onClick:faseExemplos}
+    ]);
+  }
+
+  async function fasePerfil(){
+    await typingEffect('Perfeito! Me diga com qual perfil você mais se identifica:');
+    buttons([
+      {label:'Empreendedor(a)', onClick:()=>faseNome('Empreendedor')},
+      {label:'Autônomo(a)', onClick:()=>faseNome('Autônomo')},
+      {label:'Curioso(a) sobre IA', onClick:()=>faseNome('Curioso')}
+    ]);
+  }
+
+  async function faseExemplos(){
+    await typingEffect('Veja alguns exemplos de automações que implementamos:');
+    await typingEffect('• Captação automática de leads<br>• Atendimento inteligente no WhatsApp<br>• Relatórios e análises com IA<br>• Agendamentos automáticos');
+    buttons([{label:'Quero meu diagnóstico gratuito', onClick:()=>faseNome('Interessado')}]);
+  }
+
+  async function faseNome(tipo){
+    await typingEffect('Antes de prosseguirmos, me diga seu nome:');
+    const inp=inputField('text','Digite seu nome completo');
+    buttons([{label:'Próximo',onClick:()=>faseEmail(tipo,(inp.value||'').trim())}]);
+  }
+
+  async function faseEmail(tipo,nome){
+    if(!nome){await typingEffect('Por favor, digite seu nome antes de continuar.');return;}
+    await typingEffect(`Prazer, ${nome}! Agora me informe seu e-mail:`);
+    const inp=inputField('email','voce@empresa.com');
+    buttons([{label:'Próximo',onClick:()=>faseEbook(tipo,nome,(inp.value||'').trim())}]);
+  }
+
+  async function faseEbook(tipo,nome,email){
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+      await typingEffect('E-mail inválido. Tente novamente.');
+      return;
+    }
+    await typingEffect('Deseja receber também o e-book "Automação Inteligente"?');
+    buttons([
+      {label:'Sim, enviar e-book',onClick:()=>enviar(nome,email,tipo,true)},
+      {label:'Agora não',onClick:()=>enviar(nome,email,tipo,false)}
+    ]);
+  }
+
+  async function enviar(nome,email,tipo,ebookOptIn){
+    dualTrack('Lead');
+    await typingEffect('Processando suas informações...');
+    const params=new URLSearchParams(window.location.search);
+    const origem={
+      utm_source:params.get("utm_source")||"direto",
+      utm_medium:params.get("utm_medium")||"nao_definido",
+      utm_campaign:params.get("utm_campaign")||"nao_definido"
+    };
+
+    try{
+      const res=await fetch(WEBAPP_URL,{
+        method:'POST',
+        body:JSON.stringify({nome,email,tipo,ebookOptIn,token:SECRET_KEY,...origem})
+      });
+      const text=await res.text();
+      if(res.ok && text.includes('OK')){
+        dualTrack('CompleteRegistration');
+        await typingEffect(`Perfeito, ${nome}!`);
+        if(ebookOptIn && EBOOK_URL){
+          dualTrackCustom('DownloadEbook');
+          await typingEffect('Você receberá seu diagnóstico gratuito em até 24 horas e, também, já enviei um e-mail com o link do e-book. Se preferir, pode acessar por aqui:');
+          await typingEffect(`<a href="${EBOOK_URL}" target="_blank" rel="noopener">Baixar e-book Automação Inteligente</a>`);
+        } else {
+          await typingEffect('Tudo certo! Você receberá seu diagnóstico gratuito em até 24 horas.');
+        }
+      } else {
+        await typingEffect('Ocorreu um erro ao enviar seus dados. Tente novamente mais tarde.');
+      }
+    } catch(err){
+      console.error(err);
+      await typingEffect('Falha de comunicação com o servidor.');
+    }
+  }
+
+  start();
+  </script>
+
+  <!-- Estilo do efeito de digitação e botão de voz -->
+  <style>
+  .typing {
+    position: relative;
+    color: transparent !important;
+    min-width: 60px;
+    height: 18px;
+    background: linear-gradient(90deg, #ddd 25%, #eee 37%, #ddd 63%);
+    background-size: 400% 100%;
+    animation: pulse 1.2s ease-in-out infinite;
+    border-radius: 10px;
+  }
+  @keyframes pulse {
+    0% { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+  }
+  .voice-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .voice-btn:hover {
+    transform: scale(1.1);
+  }
+  </style>
 </body>
 </html>
